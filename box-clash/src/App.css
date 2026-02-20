@@ -1,0 +1,54 @@
+body {
+  margin: 0;
+  font-family: serif;
+  background: #1f1f1f;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.app {
+  text-align: center;
+}
+
+.card {
+  background: #ddd;
+  padding: 40px;
+  color: black;
+}
+
+button {
+  display: block;
+  margin: 15px auto;
+  padding: 10px 30px;
+  background: black;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+.board {
+  margin: 30px auto;
+  background-color: #ddd;
+  padding: 50px ;
+  border-radius: 10px;
+}
+
+.row {
+  display: flex;
+  justify-content: center;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  background: black;
+  border-radius: 50%;
+  margin: 20px;
+}
