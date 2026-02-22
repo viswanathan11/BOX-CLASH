@@ -1,33 +1,49 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 function GameScreen({ gridSize, mode, difficulty, goHome }) {
   //Horizontal Edges
-  const [horizontalEdges, setHorixontalEdges] = useState(
+
+
+  const STORAGE_KEY='boxClashGameState';
+
+  const loadGameState=()=>{
+    const saved=localStorage.getItem(STORAGE_KEY);
+    if(saved){
+      return JSON.parse(saved);
+    }
+
+    return null;
+  }
+
+  const savedState=loadGameState();
+  const [horizontalEdges, setHorizontalEdges] = useState(
     //this creates array from any objects (Arrays.from(object,map,thisValue))
-    Array.from({ length: gridSize }, () => {
+     savedState?.horizontalEdges ||Array.from({ length: gridSize }, () => (
       //this creates an array of dize gridSize-1 in each row
-      Array(gridSize - 1).fill(null);
-    }),
-  );
+     Array(gridSize - 1).fill(null)
+  )
+  ));
 
   //vertical Edges
   const [verticalEdges, setVerticalEdges] = useState(
-    Array.from({ length: gridSize - 1 }, () => {
-      // this create an array of size grideSie in each column
-      Array(gridSize).fill(null);
-    }),
+    savedState?.verticalEdges ||Array.from({ length: gridSize }, () => (
+      //this creates an array of dize gridSize in each column
+       Array(gridSize).fill(null)
+  ))
   );
 
   //boxes
   const [boxes, setBoxes] = useState(
-    Array.form({ length: gridSize - 1 }, () => {
-      Array(gridSize - 1).fill(null);
+     savedState?.boxes ||Array.from({ length: gridSize - 1 }, () => {
+      return Array(gridSize - 1).fill(null);
     }),
   );
 
   const [currentPlayer, setCurrentPlayer] = useState('P1');
   const [score, setScore] = useState({ P1: 0, P2: 0 });
-
+  useEffect(()=>{
+    console.log(score);
+  },[score]);
   const handleHorizontalClick = (r, c) => {
     if (horizontalEdges[r][c]) return;
 
@@ -36,30 +52,57 @@ function GameScreen({ gridSize, mode, difficulty, goHome }) {
     const newEdges = horizontalEdges.map((row) => [...row]);
 
     newEdges[r][c] = currentPlayer;
+
+    setHorizontalEdges(newEdges)
     /* */
-    checkBoxes(r, c, 'h');
+    checkBoxes(r, c, 'h',newEdges,verticalEdges);
   };
 
   const handleVerticalClick = (r, c) => {
     if (verticalEdges[r][c]) return;
 
     const newEdges = verticalEdges.map((row) => [...row]);
-
-    checkBoxes(r, c, 'h');
+    newEdges[r][c]=currentPlayer;
+    setVerticalEdges(newEdges);
+    checkBoxes(r, c, 'v',horizontalEdges,newEdges);
   };
 
-  const checkBoxes = (r, c, type) => {
+
+  useEffect(()=>{
+    const Timer=setTimeout(()=>{
+      const gameState={
+        horizontalEdges,
+        verticalEdges,
+        boxes,
+        currentPlayer,
+        score,
+        gridSize,
+        mode,
+        difficulty,
+        timestamp:new Date().toISOString(),
+      }
+
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(gameState));
+    },5000);
+
+    //If multiple Click occure in 5s it will be cancel and only 
+    //occurs one time
+    return ()=>clearTimeout(Timer);
+  },[horizontalEdges,verticalEdges,boxes,currentPlayer,score,gridSize,mode,difficulty]);
+
+  const checkBoxes = (r, c, type, hEdges, vEdges) => {
     let scored = false;
     const newBoxes = boxes.map((row) => [...row]);
 
     if (type === 'h') {
       //above box
       if (r > 0) {
-        if (horizontalEdges[r - 1][c] 
-          && verticalEdges[r - 1][c] 
-          && verticalEdges[r - 1][c + 1] 
+        if (hEdges[r - 1][c] 
+          && vEdges[r - 1][c] 
+          && vEdges[r - 1][c + 1] 
+          &&hEdges[r][c]
         &&!newBoxes[r-1][c]) {
-          newBoxes[r-1]=currentPlayer;
+          newBoxes[r-1][c]=currentPlayer;
           scored=true;
         }
       }
@@ -67,9 +110,10 @@ function GameScreen({ gridSize, mode, difficulty, goHome }) {
       //check box below
 
       if(r<boxes.length){
-        if(horizontalEdges[r][c] &&
-          verticalEdges[r][c] &&
-          verticalEdges[r][c+1] && !newBoxes[r][c]
+        if(hEdges[r][c] &&
+          vEdges[r][c] &&
+          hEdges[r+1][c]&&
+          vEdges[r][c+1] && !newBoxes[r][c]
         ){
           newBoxes[r][c]=currentPlayer;
           scored=true;
@@ -80,10 +124,11 @@ function GameScreen({ gridSize, mode, difficulty, goHome }) {
         //check left box
 
         if(c>0){
-          if(verticalEdges[r][c-1] &&
-            horizontalEdges[r][c-1] &&
-            horizontalEdges[r][c-1] &&
-            !newBoxes[r][c-1]
+          if(vEdges[r][c-1] &&
+            hEdges[r+1][c-1] &&
+            hEdges[r][c-1] &&
+            vEdges[r][c]
+            &&!newBoxes[r][c-1]
           ){
             newBoxes[r][c-1]=currentPlayer;
             scored=true;
@@ -91,9 +136,10 @@ function GameScreen({ gridSize, mode, difficulty, goHome }) {
         }
         //check right box
         if(c<boxes[0].length){
-          if(verticalEdges[r][c] &&
-            horizontalEdges[r][c] &&
-            horizontalEdges[r+1][c]&&
+          if(vEdges[r][c] &&
+            hEdges[r][c] &&
+            hEdges[r+1][c]&&
+            vEdges[r][c+1]&&
             !newBoxes[r][c]
           ){
             newBoxes[r][c]=currentPlayer;
@@ -107,11 +153,17 @@ function GameScreen({ gridSize, mode, difficulty, goHome }) {
         setScore(prev =>({
           ...prev,[currentPlayer]:prev[currentPlayer]+1
         }))
+
       }else{
         setCurrentPlayer((prev)=>(prev==="P1"?"P2":"P1"));
       }
     
   };
+
+  const handleGoHome=()=>{
+    localStorage.removeItem(STORAGE_KEY);
+    goHome();
+  }
   return (
     <div className="game-container">
       <div className="score-board">
@@ -125,7 +177,7 @@ function GameScreen({ gridSize, mode, difficulty, goHome }) {
             {/*Dot Row*/}
             <div className="dot-row">
               {row.map((_, c) => (
-                <React.Fragment key={c}>
+                <React.Fragment key={`h-${r}-${c}`}>
                   {/* creating Dots */}
                   <div className="dot"></div>
                   <div className="h-edge" onClick={() => handleHorizontalClick(r, c)}>
@@ -142,9 +194,9 @@ function GameScreen({ gridSize, mode, difficulty, goHome }) {
             {r < verticalEdges.length && (
               <div className="middle-row">
                 {verticalEdges[r].map((_, c) => (
-                  <React.Fragment>
+                  <React.Fragment key={`v-${r}-${c}`}>
                     <div className="v-edge" onClick={() => handleVerticalClick(r, c)}>
-                      {verticalEdge[r][c] && <div className="edge-filled-vertical"></div>}
+                      {verticalEdges[r][c] && <div className="edge-filled-vertical"></div>}
                     </div>
                     {c < boxes[r].length && (
                       <div className="box">
@@ -158,7 +210,7 @@ function GameScreen({ gridSize, mode, difficulty, goHome }) {
           </div>
         ))}
       </div>
-      <button onClick={goHome}>Back</button>
+      <br /><button onClick={handleGoHome}>Back</button> 
     </div>
   );
 }

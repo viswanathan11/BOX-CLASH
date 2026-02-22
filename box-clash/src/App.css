@@ -1,7 +1,8 @@
+/* ===== Global ===== */
 body {
   margin: 0;
-  font-family: serif;
-  background: #1f1f1f;
+  background: #111;
+  font-family: Arial, Helvetica, sans-serif;
   color: white;
   display: flex;
   justify-content: center;
@@ -9,46 +10,103 @@ body {
   height: 100vh;
 }
 
-.app {
+/* ===== Game Container ===== */
+.game-container {
   text-align: center;
 }
 
-.card {
-  background: #ddd;
-  padding: 40px;
-  color: black;
+/* ===== Score Board ===== */
+.score-board {
+  margin-bottom: 20px;
+  font-size: 18px;
+  font-weight: bold;
 }
 
-button {
-  display: block;
-  margin: 15px auto;
-  padding: 10px 30px;
-  background: black;
-  color: white;
-  border: none;
+/* ===== Board ===== */
+.board {
+  display: inline-block;
+}
+
+/* ===== Dot Row ===== */
+.dot-row {
+  display: flex;
+  align-items: center;
+}
+
+/* ===== Middle Row (Vertical edges + boxes) ===== */
+.middle-row {
+  display: flex;
+  align-items: center;
+}
+
+/* ===== Dots ===== */
+.dot {
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 50%;
+}
+
+/* ===== Horizontal Edge ===== */
+.h-edge {
+  width: 50px;
+  height: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 
-button:hover {
-  opacity: 0.8;
+.edge-filled {
+  width: 100%;
+  height: 4px;
+  background: #00bfff;
 }
 
-.board {
-  margin: 30px auto;
-  background-color: #ddd;
-  padding: 50px ;
-  border-radius: 10px;
-}
-
-.row {
-  display: flex;
-  justify-content: center;
-}
-
-.dot {
+/* ===== Vertical Edge ===== */
+.v-edge {
   width: 10px;
-  height: 10px;
-  background: black;
-  border-radius: 50%;
-  margin: 20px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.edge-filled-vertical {
+  width: 4px;
+  height: 100%;
+  background: #00bfff;
+}
+
+/* ===== Box ===== */
+.box {
+  width: 52.2px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/* ===== Button ===== */
+button {
+  margin-top: 20px;
+  padding: 8px 20px;
+  border: none;
+  background: #00bfff;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+button:hover {
+  background: #009acd;
+}
+
+.card{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
