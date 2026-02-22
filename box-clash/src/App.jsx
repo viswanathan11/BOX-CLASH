@@ -1,12 +1,39 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import GameScreen from "./Components/GameScreen";
 function App() {
-  const [screen, setScreen] = useState("home");
-  const [mode, setMode] = useState(null); // "2p" or "ai"
-  const [gridSize, setGridSize] = useState(null);
+
+  const APP_STORAGE_KEY= 'boxCLashAPpState';
+
+  const loadAppState=()=>{
+    const saved=localStorage.getItem(APP_STORAGE_KEY);
+
+    if(saved){
+      return JSON.parse(saved);
+    }
+    return null;
+  };
+  const savedAppState=loadAppState();
+  const [screen, setScreen] = useState(savedAppState?.screen|| "home");
+  const [mode, setMode] = useState(savedAppState?.mode || null); // "2p" or "ai"
+  const [gridSize, setGridSize] = useState(savedAppState?.gridSize||null);
   const [difficulty, setDifficulty] = useState(null);
 
+  useEffect(()=>{
+    const appState={
+      screen,
+      mode,
+      gridSize,
+      difficulty,
+    };
+    localStorage.setItem(APP_STORAGE_KEY,JSON.stringify(appState));
+  },[screen,mode,gridSize,difficulty]);
+  const goHome=()=>{
+    localStorage.removeItem(APP_STORAGE_KEY);
+    setScreen("home");
+    setGridSize(null);
+    setDifficulty(null);
+  };
   return (
     <div className="app">
 
@@ -28,6 +55,7 @@ function App() {
           </button>
         </div>
       )}
+
 
       {screen === "twoPlayer" && (
         <div className="card">
@@ -78,7 +106,7 @@ function App() {
           gridSize={gridSize}
           mode={mode}
           difficulty={difficulty}
-          goHome={() => setScreen("home")}
+          goHome={goHome}
         />
       )}
 

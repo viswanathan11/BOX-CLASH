@@ -3,47 +3,57 @@ import React, { useEffect, useState } from 'react';
 function GameScreen({ gridSize, mode, difficulty, goHome }) {
   //Horizontal Edges
 
+  const STORAGE_KEY = 'boxClashGameState';
 
-  const STORAGE_KEY='boxClashGameState';
+  const loadGameState = () => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
 
-  const loadGameState=()=>{
-    const saved=localStorage.getItem(STORAGE_KEY);
-    if(saved){
-      return JSON.parse(saved);
+      if (parsed.gridSize === gridSize) {
+        return parsed;
+      }
+
+      //remove any invalid saved state
+      localStorage.removeItem(STORAGE_KEY);
     }
 
     return null;
-  }
+  };
 
-  const savedState=loadGameState();
+  const savedState = loadGameState();
+
+  const [currentPlayer, setCurrentPlayer] = useState(savedState?.currentPlayer || 'P1');
+  const [score, setScore] = useState(savedState?.score || { P1: 0, P2: 0 });
   const [horizontalEdges, setHorizontalEdges] = useState(
     //this creates array from any objects (Arrays.from(object,map,thisValue))
-     savedState?.horizontalEdges ||Array.from({ length: gridSize }, () => (
-      //this creates an array of dize gridSize-1 in each row
-     Array(gridSize - 1).fill(null)
-  )
-  ));
+    savedState?.horizontalEdges ||
+      Array.from({ length: gridSize }, () =>
+        //this creates an array of dize gridSize-1 in each row
+        Array(gridSize - 1).fill(null),
+      ),
+  );
 
   //vertical Edges
   const [verticalEdges, setVerticalEdges] = useState(
-    savedState?.verticalEdges ||Array.from({ length: gridSize }, () => (
-      //this creates an array of dize gridSize in each column
-       Array(gridSize).fill(null)
-  ))
+    savedState?.verticalEdges ||
+      Array.from({ length: gridSize - 1 }, () =>
+        //this creates an array of dize gridSize in each column
+        Array(gridSize).fill(null),
+      ),
   );
 
   //boxes
   const [boxes, setBoxes] = useState(
-     savedState?.boxes ||Array.from({ length: gridSize - 1 }, () => {
-      return Array(gridSize - 1).fill(null);
-    }),
+    savedState?.boxes ||
+      Array.from({ length: gridSize - 1 }, () => {
+        return Array(gridSize - 1).fill(null);
+      }),
   );
 
-  const [currentPlayer, setCurrentPlayer] = useState('P1');
-  const [score, setScore] = useState({ P1: 0, P2: 0 });
-  useEffect(()=>{
+  useEffect(() => {
     console.log(score);
-  },[score]);
+  }, [score]);
   const handleHorizontalClick = (r, c) => {
     if (horizontalEdges[r][c]) return;
 
@@ -53,24 +63,23 @@ function GameScreen({ gridSize, mode, difficulty, goHome }) {
 
     newEdges[r][c] = currentPlayer;
 
-    setHorizontalEdges(newEdges)
+    setHorizontalEdges(newEdges);
     /* */
-    checkBoxes(r, c, 'h',newEdges,verticalEdges);
+    checkBoxes(r, c, 'h', newEdges, verticalEdges);
   };
 
   const handleVerticalClick = (r, c) => {
     if (verticalEdges[r][c]) return;
 
     const newEdges = verticalEdges.map((row) => [...row]);
-    newEdges[r][c]=currentPlayer;
+    newEdges[r][c] = currentPlayer;
     setVerticalEdges(newEdges);
-    checkBoxes(r, c, 'v',horizontalEdges,newEdges);
+    checkBoxes(r, c, 'v', horizontalEdges, newEdges);
   };
 
-
-  useEffect(()=>{
-    const Timer=setTimeout(()=>{
-      const gameState={
+  useEffect(() => {
+    const Timer = setTimeout(() => {
+      const gameState = {
         horizontalEdges,
         verticalEdges,
         boxes,
@@ -79,16 +88,16 @@ function GameScreen({ gridSize, mode, difficulty, goHome }) {
         gridSize,
         mode,
         difficulty,
-        timestamp:new Date().toISOString(),
-      }
+        timestamp: new Date().toISOString(),
+      };
 
-      localStorage.setItem(STORAGE_KEY,JSON.stringify(gameState));
-    },5000);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+    }, 3000);
 
-    //If multiple Click occure in 5s it will be cancel and only 
+    //If multiple Click occure in 5s it will be cancel and only
     //occurs one time
-    return ()=>clearTimeout(Timer);
-  },[horizontalEdges,verticalEdges,boxes,currentPlayer,score,gridSize,mode,difficulty]);
+    return () => clearTimeout(Timer);
+  }, [horizontalEdges, verticalEdges, boxes, currentPlayer, score, gridSize, mode, difficulty]);
 
   const checkBoxes = (r, c, type, hEdges, vEdges) => {
     let scored = false;
@@ -97,73 +106,78 @@ function GameScreen({ gridSize, mode, difficulty, goHome }) {
     if (type === 'h') {
       //above box
       if (r > 0) {
-        if (hEdges[r - 1][c] 
-          && vEdges[r - 1][c] 
-          && vEdges[r - 1][c + 1] 
-          &&hEdges[r][c]
-        &&!newBoxes[r-1][c]) {
-          newBoxes[r-1][c]=currentPlayer;
-          scored=true;
+        if (
+          hEdges[r - 1][c] &&
+          vEdges[r - 1][c] &&
+          vEdges[r - 1][c + 1] &&
+          hEdges[r][c] &&
+          !newBoxes[r - 1][c]
+        ) {
+          newBoxes[r - 1][c] = currentPlayer;
+          scored = true;
         }
       }
 
       //check box below
 
-      if(r<boxes.length){
-        if(hEdges[r][c] &&
+      if (r < boxes.length) {
+        if (
+          hEdges[r][c] &&
           vEdges[r][c] &&
-          hEdges[r+1][c]&&
-          vEdges[r][c+1] && !newBoxes[r][c]
-        ){
-          newBoxes[r][c]=currentPlayer;
-          scored=true;
+          hEdges[r + 1][c] &&
+          vEdges[r][c + 1] &&
+          !newBoxes[r][c]
+        ) {
+          newBoxes[r][c] = currentPlayer;
+          scored = true;
         }
       }
     }
-      if(type==="v"){
-        //check left box
+    if (type === 'v') {
+      //check left box
 
-        if(c>0){
-          if(vEdges[r][c-1] &&
-            hEdges[r+1][c-1] &&
-            hEdges[r][c-1] &&
-            vEdges[r][c]
-            &&!newBoxes[r][c-1]
-          ){
-            newBoxes[r][c-1]=currentPlayer;
-            scored=true;
-          }
-        }
-        //check right box
-        if(c<boxes[0].length){
-          if(vEdges[r][c] &&
-            hEdges[r][c] &&
-            hEdges[r+1][c]&&
-            vEdges[r][c+1]&&
-            !newBoxes[r][c]
-          ){
-            newBoxes[r][c]=currentPlayer;
-            scored=true;
-          }
+      if (c > 0) {
+        if (
+          vEdges[r][c - 1] &&
+          hEdges[r + 1][c - 1] &&
+          hEdges[r][c - 1] &&
+          vEdges[r][c] &&
+          !newBoxes[r][c - 1]
+        ) {
+          newBoxes[r][c - 1] = currentPlayer;
+          scored = true;
         }
       }
-      setBoxes(newBoxes);
-      if(scored){
-        //adding score to the prev score
-        setScore(prev =>({
-          ...prev,[currentPlayer]:prev[currentPlayer]+1
-        }))
-
-      }else{
-        setCurrentPlayer((prev)=>(prev==="P1"?"P2":"P1"));
+      //check right box
+      if (c < boxes[0].length) {
+        if (
+          vEdges[r][c] &&
+          hEdges[r][c] &&
+          hEdges[r + 1][c] &&
+          vEdges[r][c + 1] &&
+          !newBoxes[r][c]
+        ) {
+          newBoxes[r][c] = currentPlayer;
+          scored = true;
+        }
       }
-    
+    }
+    setBoxes(newBoxes);
+    if (scored) {
+      //adding score to the prev score
+      setScore((prev) => ({
+        ...prev,
+        [currentPlayer]: prev[currentPlayer] + 1,
+      }));
+    } else {
+      setCurrentPlayer((prev) => (prev === 'P1' ? 'P2' : 'P1'));
+    }
   };
 
-  const handleGoHome=()=>{
+  const handleGoHome = () => {
     localStorage.removeItem(STORAGE_KEY);
     goHome();
-  }
+  };
   return (
     <div className="game-container">
       <div className="score-board">
@@ -210,7 +224,8 @@ function GameScreen({ gridSize, mode, difficulty, goHome }) {
           </div>
         ))}
       </div>
-      <br /><button onClick={handleGoHome}>Back</button> 
+      <br />
+      <button onClick={handleGoHome}>Back</button>
     </div>
   );
 }
