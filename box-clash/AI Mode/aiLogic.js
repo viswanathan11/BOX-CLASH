@@ -2,12 +2,12 @@ export const getAvailableMoves=(hEdges,vEdges)=>{
     let moves=[];
 
     for(let r=0;r<hEdges.length;r++){
-        for(let c=0;c<Vedges.length;c++){
+        for(let c=0;c<hEdges[0].length;c++){
             if(!hEdges[r][c])moves.push({type:'h',r,c});
         }
     }
 
-    for(let r=0;r<Vedges.length;r++){
+    for(let r=0;r<vEdges.length;r++){
         for(let c=0;c<vEdges[r].length;c++){
             if(!vEdges[r][c]){
                 moves.push({type:'v',r,c});
@@ -42,7 +42,7 @@ const wouldCompleteBox=(move,hEdges,vEdges,gridSize)=>{
     //box Below
     //this condition will ensure that it does not go beyong the last row
     if(r<gridSize-1){
-        if(hEdges[r+1]?.[c] && vEdges[r-1][c] && vEdges[r][c+1]){
+        if(hEdges[r+1]?.[c] && vEdges[r][c] && vEdges[r][c+1]){
             completedBoxes++;
         }
     }
@@ -75,7 +75,7 @@ const wouldGiveThirdEdge=(move,hEdges,vEdges,gridSize)=>{
     const simV=vEdges.map((row)=>[...row]);
 
     if(type==='h') simH[r][c]='SIM';
-    else simV[r][c]=='SIM';
+    else simV[r][c]='SIM';
 
     const adjacentBoxes=[];
 
@@ -129,7 +129,7 @@ export const getAIMove=(hEdges,vEdges,gridSize,difficulty)=>{
             safeMoves.push(move);
         }else{
             //using the move would create a 3 completing edge
-            riskMoves.push(move);
+            riskyMoves.push(move);
         }
     }
 
@@ -143,19 +143,34 @@ export const getAIMove=(hEdges,vEdges,gridSize,difficulty)=>{
 
         //why 0.7?
         //else check if saveMove exist then return it
-        if(safeMoves.length>0 && Math.randome() <0.7){
+        if(safeMoves.length>0 && Math.random() <0.7){
             return safeMoves[Math.floor(Math.random() *safeMoves.length)];
         }
 
-        const fallbBack=safeMoves.length>0?safeMoves:riskyMoves;
-        return fallbBack[Math.floor(Math.random() * fallbBack.length)];
+        const fallback=safeMoves.length>0?safeMoves:riskyMoves;
+        return fallback[Math.floor(Math.random() * fallback.length)];
     }
 
     //---Hard:Optimal Play---
 
     if(difficulty==='hard'){
         if(completingMoves.length>0){
-            
+            //sorting in descending order based on the number of boxes it will complete
+            completingMoves.sort((a,b)=>b.completions - a.completions);
+            return completingMoves[0].move;
         }
+
+        //no completing move than play safe move
+        if(safeMoves.length>0){
+            return safeMoves[Math.floor(Math.random()*safeMoves.length)];
+        }
+
+
+        //last if no option exist then return riskyMove[0]
+        return riskyMoves[0];
     }
+
+    //Safety fallback - should never reach here if difficult is valid
+    //safet move suppose difficulty get any other value except easy medium impossible
+    return moves[Math.floor(Math.random()*moves.length)];
 }

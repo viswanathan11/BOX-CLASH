@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-
+import React, { use, useEffect, useState } from 'react';
+import { getAIMove } from '../../AI Mode/aiLogic';
 function GameScreen({ gridSize, mode, difficulty, goHome }) {
   //Horizontal Edges
 
@@ -54,7 +54,10 @@ function GameScreen({ gridSize, mode, difficulty, goHome }) {
   useEffect(() => {
     console.log(score);
   }, [score]);
-  const handleHorizontalClick = (r, c) => {
+  const handleHorizontalClick = (r, c,isAI=false) => {
+
+    //this blocks the user click when ai mode is on
+    if(mode==='ai' && currentPlayer==='P2' && !isAI)return;
     if (horizontalEdges[r][c]) return;
 
     //map return an array always
@@ -68,7 +71,10 @@ function GameScreen({ gridSize, mode, difficulty, goHome }) {
     checkBoxes(r, c, 'h', newEdges, verticalEdges);
   };
 
-  const handleVerticalClick = (r, c) => {
+  const handleVerticalClick = (r, c,isAI=false) => {
+
+    //this blocks the user click when ai mode is on
+    if(mode === 'ai' && currentPlayer==='P2' && !isAI) return;
     if (verticalEdges[r][c]) return;
 
     const newEdges = verticalEdges.map((row) => [...row]);
@@ -76,6 +82,29 @@ function GameScreen({ gridSize, mode, difficulty, goHome }) {
     setVerticalEdges(newEdges);
     checkBoxes(r, c, 'v', horizontalEdges, newEdges);
   };
+
+
+  //AI Turn Trigger
+
+  useEffect(()=>{
+    //return void if the mode is not ai or the currentPlayer is not P2
+    if(mode!=='ai' ||currentPlayer!=='P2')return;
+
+    const delay=difficulty==='hard'?400:difficulty === 'medium'?700:1000;
+
+    const timer=setTimeout(()=>{
+      const move=getAIMove(horizontalEdges,verticalEdges,gridSize,difficulty);
+      if(!move) return;
+
+      if(move.type==='h'){
+        handleHorizontalClick(move.r,move.c,true);//Set AI Move True
+      }else{
+        handleVerticalClick(move.r,move.c,true);//set AI Move Truel
+      }
+    },delay);
+
+    return ()=> clearTimeout(timer);
+  },[currentPlayer,mode,horizontalEdges,verticalEdges,gridSize,difficulty]);
 
   useEffect(() => {
     const Timer = setTimeout(() => {
@@ -178,13 +207,13 @@ function GameScreen({ gridSize, mode, difficulty, goHome }) {
     localStorage.removeItem(STORAGE_KEY);
     goHome();
   };
-  
+
   return (
     <div className="game-container">
       <div className="score-board">
         <div>Player 1: {score.P1}</div>
         <div>
-          {mode == 'ai' ? 'AI' : 'Player 2'}: {score.P2}
+          {mode === 'ai' ? 'AI' : 'Player 2'}: {score.P2}
         </div>
       </div>
 
