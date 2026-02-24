@@ -178,11 +178,14 @@ function GameScreen({ gridSize, mode, difficulty, goHome }) {
     localStorage.removeItem(STORAGE_KEY);
     goHome();
   };
+  
   return (
     <div className="game-container">
       <div className="score-board">
-        <div>Player 1:{score.P1}</div>
-        <div>Player 2:{score.P2}</div>
+        <div>Player 1: {score.P1}</div>
+        <div>
+          {mode == 'ai' ? 'AI' : 'Player 2'}: {score.P2}
+        </div>
       </div>
 
       <div className="board">
@@ -214,7 +217,9 @@ function GameScreen({ gridSize, mode, difficulty, goHome }) {
                     </div>
                     {c < boxes[r].length && (
                       <div className="box">
-                        {boxes[r][c]} {/*boxes[r][c]= p1|p2*/}
+                        {/*boxes[r][c]= p1|p2*/}
+                        {console.log(`player :${boxes[r][c]} mode:${mode}`)}
+                        {boxes[r][c] === 'P2' && mode === 'ai' ? 'AI' : boxes[r][c]}
                       </div>
                     )}
                   </React.Fragment>

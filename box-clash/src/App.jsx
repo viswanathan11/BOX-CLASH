@@ -109,7 +109,6 @@ function App() {
           goHome={goHome}
         />
       )}
-
     </div>
   );
 }
