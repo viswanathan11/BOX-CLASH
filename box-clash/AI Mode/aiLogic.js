@@ -113,7 +113,6 @@ export const getAIMove=(hEdges,vEdges,gridSize,difficulty)=>{
         //returs an random move{object} from the moves array
         return moves[Math.floor(Math.random() * moves.length)];
     }
-
     //now we are Categorizing the moves
     const completingMoves=[];
     const safeMoves=[];

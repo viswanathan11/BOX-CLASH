@@ -1,114 +1,122 @@
 import { useEffect, useState } from "react";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import "./App.css";
 import GameScreen from "./Components/GameScreen";
+import GridSelectionPage from "./Components/GridSelectionPage";
+import HeroPage from "./Components/HeroPage";
+
 function App() {
+  const APP_STORAGE_KEY = "boxCLashAPpState";
 
-  const APP_STORAGE_KEY= 'boxCLashAPpState';
-
-  const loadAppState=()=>{
-    const saved=localStorage.getItem(APP_STORAGE_KEY);
-
-    if(saved){
-      return JSON.parse(saved);
+  const loadAppState = () => {
+    const saved = localStorage.getItem(APP_STORAGE_KEY);
+    if (!saved) {
+      return null;
     }
-    return null;
-  };
-  const savedAppState=loadAppState();
-  const [screen, setScreen] = useState(savedAppState?.screen|| "home");
-  const [mode, setMode] = useState(savedAppState?.mode || null); // "2p" or "ai"
-  const [gridSize, setGridSize] = useState(savedAppState?.gridSize||null);
-  const [difficulty, setDifficulty] = useState(null);
 
-  useEffect(()=>{
-    const appState={
-      screen,
+    try {
+      return JSON.parse(saved);
+    } catch {
+      localStorage.removeItem(APP_STORAGE_KEY);
+      return null;
+    }
+  };
+
+  const savedAppState = loadAppState();
+  const [mode, setMode] = useState(savedAppState?.mode || null);
+  const [gridSize, setGridSize] = useState(savedAppState?.gridSize || null);
+  const [difficulty, setDifficulty] = useState(savedAppState?.difficulty || null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const appState = {
       mode,
       gridSize,
       difficulty,
     };
-    localStorage.setItem(APP_STORAGE_KEY,JSON.stringify(appState));
-  },[screen,mode,gridSize,difficulty]);
-  const goHome=()=>{
-    localStorage.removeItem(APP_STORAGE_KEY);
-    setScreen("home");
+
+    localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(appState));
+  }, [mode, gridSize, difficulty]);
+
+  const handleModeSelect = (selectedMode) => {
+    setMode(selectedMode);
     setGridSize(null);
     setDifficulty(null);
+    navigate("/select-grid");
   };
+
+  const handleGridSelect = (selectedGridSize) => {
+    setDifficulty(null);
+    setGridSize(selectedGridSize);
+    navigate("/game");
+  };
+
+  const handleDifficultySelect = (selectedDifficulty) => {
+    const aiGridMap = {
+      easy: 6,
+      medium: 5,
+      impossible: 4,
+    };
+
+    setDifficulty(selectedDifficulty);
+    setGridSize(aiGridMap[selectedDifficulty]);
+    navigate("/game");
+  };
+
+  const handleBackToHero = () => {
+    setMode(null);
+    setGridSize(null);
+    setDifficulty(null);
+    navigate("/");
+  };
+
+  const goHome = () => {
+    localStorage.removeItem(APP_STORAGE_KEY);
+    setMode(null);
+    setGridSize(null);
+    setDifficulty(null);
+    navigate("/");
+  };
+
   return (
     <div className="app">
+      <Routes>
+        <Route path="/" element={<HeroPage onSelectMode={handleModeSelect} />} />
 
-      {screen === "home" && (
-        <div className="card">
-          <h1>BOX CLASH</h1>
-          <button onClick={() => {
-            setMode("2p");
-            setScreen("twoPlayer");
-          }}>
-            2 PLAYER
-          </button>
-
-          <button onClick={() => {
-            setMode("ai");
-            setScreen("aiSetup");
-          }}>
-            AI MODE
-          </button>
-        </div>
-      )}
-
-
-      {screen === "twoPlayer" && (
-        <div className="card">
-          <h2>2 PLAYER MODE</h2>
-          <button onClick={() => {
-            setGridSize(4);
-            setScreen("game");
-          }}>4x4</button>
-
-          <button onClick={() => {
-            setGridSize(5);
-            setScreen("game");
-          }}>5x5</button>
-
-          <button onClick={() => {
-            setGridSize(6);
-            setScreen("game");
-          }}>6x6</button>
-        </div>
-      )}
-
-      {screen === "aiSetup" && (
-        <div className="card">
-          <h2>AI MODE</h2>
-
-          <button onClick={() => {
-            setDifficulty("easy");
-            setGridSize(6);
-            setScreen("game");
-          }}>EASY</button>
-
-          <button onClick={() => {
-            setDifficulty("medium");
-            setGridSize(5);
-            setScreen("game");
-          }}>MEDIUM</button>
-
-          <button onClick={() => {
-            setDifficulty("impossible");
-            setGridSize(4);
-            setScreen("game");
-          }}>IMPOSSIBLE</button>
-        </div>
-      )}
-
-      {screen === "game" && (
-        <GameScreen
-          gridSize={gridSize}
-          mode={mode}
-          difficulty={difficulty}
-          goHome={goHome}
+        <Route
+          path="/select-grid"
+          element={
+            mode ? (
+              <GridSelectionPage
+                mode={mode}
+                onSelectGrid={handleGridSelect}
+                onSelectDifficulty={handleDifficultySelect}
+                onBack={handleBackToHero}
+              />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
         />
-      )}
+
+        <Route
+          path="/game"
+          element={
+            mode && gridSize ? (
+              <GameScreen
+                gridSize={gridSize}
+                mode={mode}
+                difficulty={difficulty}
+                goHome={goHome}
+              />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </div>
   );
 }
